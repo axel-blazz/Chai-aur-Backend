@@ -28,8 +28,16 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User already exists")
     }
     // check for images, avatar
-    const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
+    const avatarLocalPath = req.files?.avatar?.[0]?.path
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path
+
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
+    console.log("coverImageLocalPath", coverImageLocalPath);
+    
+
 
     if(!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
@@ -41,6 +49,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if(!avatar) {
         throw new ApiError(500, "Avatar upload failed")
     }
+    
     // create user object - create entry in db
     const user = await User.create({
         fullname,
@@ -48,7 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
         username : username.toLowerCase(),
         password,
         avatar: avatar.url,
-        coverImage: coverImage.url || "" // if cover image is not uploaded
+        coverImage: coverImage?.url || "", // if cover image is not uploaded
     })
     // remove password, refershToken from response
     const createdUser = await User.findById(user._id).select(
